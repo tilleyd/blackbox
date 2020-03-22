@@ -1,0 +1,13 @@
+{
+    "mode": "visualize",
+    "optimizer": "examples/pso.py",
+
+    "hyper": {
+        "pso": {
+            "swarm_size": 30,
+            "w": 0.8,
+            "c1": 1.0,
+            "c2": 1.0
+        }
+    }
+}
