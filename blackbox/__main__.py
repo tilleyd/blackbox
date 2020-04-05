@@ -15,7 +15,8 @@ def bb_iterate(context, state, t):
 optimizer_fp = None
 config_fp = None
 
-# First check for any arguments overriding the optimizer or config file
+# First check for any arguments overriding the optimizer or config file or
+# if loading a log file
 import sys
 import os.path
 for arg in sys.argv[1:]:
@@ -23,6 +24,17 @@ for arg in sys.argv[1:]:
         optimizer_fp = arg
     elif config_fp == None and arg.endswith('.json'):
         config_fp = arg
+    elif arg.endswith('.pickle'):
+        # loading a log file, show the metrics
+        from blackbox.testbed import Testbed
+        import pickle
+        try:
+            with open(arg, 'rb') as logfile:
+                log = pickle.load(logfile)
+                Testbed.show_metrics(log)
+        except Exception as e:
+            print('Error: invalid log file \'%s\'' %(arg))
+        exit() # don't continue
 
 # Attempt to load the config file
 config = {}
@@ -62,6 +74,7 @@ if os.path.isfile(optimizer_fp):
     spec.loader.exec_module(optimizer)
 else:
     print('Error: file \'%s\' does not exist' %(optimizer_fp))
+    exit()
 
 # Load the hyperparameter config for the optimizer.
 optimizer_config = {}
@@ -70,10 +83,27 @@ if 'hyper' in config and optimizer_name in config['hyper']:
 else:
     print('Warning: no hyperparameters found for \'%s\'' %(optimizer_name))
 
+# Get the execution mode
+mode = 'evaluate'
+if 'mode' in config:
+    mode = config['mode']
+else:
+    print('Warning: no mode found in config, defaulting to \'evaluate\'')
+
+# Get the log directory
+log_dir = None
+if 'log_dir' in config:
+    log_dir = config['log_dir']
+
+# Get the metrics option
+show_metrics = False
+if 'show_metrics' in config:
+    show_metrics = config['show_metrics']
+
 # Create the testbed and start
 from blackbox.testbed import Testbed
 
-# just the modified schwefel's function for now
+# Just the modified schwefel's function for now
 def f(x):
     import numpy as np
     nx = len(x)
@@ -95,19 +125,13 @@ def f(x):
 
     return 418.9829*nx - sm
 
-tb = Testbed([f], 2, -100, 100)
-
-mode = 'evaluate'
-if 'mode' in config:
-    mode = config['mode']
-else:
-    print('Warning: no mode found in config, defaulting to \'evaluate\'')
+tb = Testbed([f], 2, -100, 100, log_dir=log_dir)
 
 if mode == 'visualize':
     tb.visualize_all(optimizer.bb_init, optimizer.bb_iterate, optimizer_config)
 elif mode == 'evaluate':
-    results = tb.evaluate_all(optimizer.bb_init, optimizer.bb_iterate, optimizer_config)
+    results = tb.evaluate_all(optimizer.bb_init, optimizer.bb_iterate, optimizer_config, show_metrics=show_metrics)
     for i, r in enumerate(results):
-        print('Function %i: found' %(i), r[0], '-> %f' %(r[1]))
+        print('Function %i: ' %(i), r[0], '-> %f' %(r[1]))
 else:
     print('Error: invalid mode \'%s\'' %(mode))

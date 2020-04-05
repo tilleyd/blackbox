@@ -1,6 +1,8 @@
 {
-    "mode": "visualize",
+    "mode": "evaluate",
     "optimizer": "examples/pso.py",
+    "log_dir": "examples/log",
+    "show_metrics": false,
 
     "hyper": {
         "pso": {
