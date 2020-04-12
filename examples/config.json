@@ -1,15 +1,12 @@
 {
-    "mode": "evaluate",
     "optimizer": "examples/pso.py",
+    "context": "examples/context.py",
     "log_dir": "examples/log",
-    "show_metrics": false,
 
     "hyper": {
-        "pso": {
-            "swarm_size": 30,
-            "w": 0.8,
-            "c1": 1.0,
-            "c2": 1.0
-        }
+        "swarm_size": 30,
+        "w": 0.8,
+        "c1": 1.0,
+        "c2": 1.0
     }
 }
